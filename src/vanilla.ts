@@ -63,6 +63,16 @@ const createStoreImpl: CreateStoreImpl = (createState) => {
   let state: TState
   const listeners: Set<Listener> = new Set()
 
+  /**
+   * setState 方法
+   * @param partial 
+   * @param replace 
+   *   1.  setState 判断入参partial是否为函数
+   *   2.  函数 => 新state为函数返回值
+   *   3. 非函数 => 新state为partial
+   *   4. 遍历所有监听器(listeners) => 传入新、旧state作为入参来调用他们
+   */
+
   const setState: StoreApi<TState>['setState'] = (partial, replace) => {
     // TODO: Remove type assertion once https://github.com/microsoft/TypeScript/issues/37663 is resolved
     // https://github.com/microsoft/TypeScript/issues/37663#issuecomment-759728342
@@ -82,12 +92,20 @@ const createStoreImpl: CreateStoreImpl = (createState) => {
 
   const getState: StoreApi<TState>['getState'] = () => state
 
+  /**
+   * 定义subscribe方法，用于添加监听器
+   * @param listener 
+   * @returns 
+   */
   const subscribe: StoreApi<TState>['subscribe'] = (listener) => {
     listeners.add(listener)
     // Unsubscribe
     return () => listeners.delete(listener)
   }
 
+  /**
+   * 清空所有监听器
+   */
   const destroy: StoreApi<TState>['destroy'] = () => {
     if (import.meta.env?.MODE !== 'production') {
       console.warn(

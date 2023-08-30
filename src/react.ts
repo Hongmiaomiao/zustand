@@ -4,7 +4,7 @@ import { useDebugValue } from 'react'
 // See: https://github.com/pmndrs/valtio/issues/452
 // The following is a workaround until ESM is supported.
 // eslint-disable-next-line import/extensions
-import useSyncExternalStoreExports from 'use-sync-external-store/shim/with-selector'
+import useSyncExternalStoreExports from 'use-sync-external-store/shim/with-selector'  // React官方hook，用于同步外部存储
 import { createStore } from './vanilla.ts'
 import type {
   Mutate,
@@ -44,6 +44,16 @@ export function useStore<S extends WithReact<StoreApi<unknown>>, U>(
   equalityFn: ((a: U, b: U) => boolean) | undefined
 ): U
 
+/**
+ * 
+ * @param api 
+ * @param selector 
+ * @param equalityFn 
+ * @returns 
+ * 用于在react组件中访问zustand store
+ * 1. 使用`useSyncExternalStoreWithSelector`钩子来同步zustand store的状态
+ * 2. 处理了一些警告和调试功能
+ */
 export function useStore<TState, StateSlice>(
   api: WithReact<StoreApi<TState>>,
   selector: (state: TState) => StateSlice = api.getState as any,
