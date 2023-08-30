@@ -4,7 +4,7 @@ import { useDebugValue } from 'react'
 // See: https://github.com/pmndrs/valtio/issues/452
 // The following is a workaround until ESM is supported.
 // eslint-disable-next-line import/extensions
-import useSyncExternalStoreExports from 'use-sync-external-store/shim/with-selector'  // React官方hook，用于同步外部存储
+import useSyncExternalStoreExports from 'use-sync-external-store/shim/with-selector' // React官方hook，用于同步外部存储
 import { createStore } from './vanilla.ts'
 import type {
   Mutate,
@@ -45,11 +45,11 @@ export function useStore<S extends WithReact<StoreApi<unknown>>, U>(
 ): U
 
 /**
- * 
- * @param api 
- * @param selector 
- * @param equalityFn 
- * @returns 
+ *
+ * @param api
+ * @param selector
+ * @param equalityFn
+ * @returns
  * 用于在react组件中访问zustand store
  * 1. 使用`useSyncExternalStoreWithSelector`钩子来同步zustand store的状态
  * 2. 处理了一些警告和调试功能
@@ -105,6 +105,14 @@ type Create = {
   <S extends StoreApi<unknown>>(store: S): UseBoundStore<S>
 }
 
+/**
+ * @param createState 用于获取初始化的state
+ * @returns
+ * 1. 判断createState 是否函数
+ * 2. 是 => 返回值作为初始state
+ * 3. 不是 => createState直接作为初始State
+ * 4. UseBoundStore, 调用useStore,把state绑定到Store
+ */
 const createImpl = <T>(createState: StateCreator<T, [], []>) => {
   if (
     import.meta.env?.MODE !== 'production' &&
