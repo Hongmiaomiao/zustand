@@ -45,14 +45,11 @@ export function useStore<S extends WithReact<StoreApi<unknown>>, U>(
 ): U
 
 /**
- *
  * @param api
  * @param selector
  * @param equalityFn
  * @returns
- * 用于在react组件中访问zustand store
- * 1. 使用`useSyncExternalStoreWithSelector`钩子来同步zustand store的状态
- * 2. 处理了一些警告和调试功能
+ * 主要是通过`useSyncExternalStoreWithSelector`钩子来实现store更新后局部的组件重新渲染
  */
 export function useStore<TState, StateSlice>(
   api: WithReact<StoreApi<TState>>,
@@ -69,6 +66,23 @@ export function useStore<TState, StateSlice>(
     )
     didWarnAboutEqualityFn = true
   }
+
+  /**
+   * 这个方法整体做的是监听Zustand Store的变化，来判断是否触发重新渲染等逻辑。
+   * useSyncExternalStoreWithSelector - 用于同步外部存储状态的 React Hook。
+   * => 1. 传入了subscribe, useSyncExternalStoreWithSelector内部通过调用subscribe添加对zustand状态的订阅
+   * => 2. 当zustand的set方法被调用，会通知lisnters,这里就包括了useSyncExternalStoreWithSelector内部。
+   * => 3. 这时这里就包括了useSyncExternalStoreWithSelector内部 会根据selector、equalityFn来决定是否要重新传染。其触发的重新渲染的部分是订阅了
+   * useSyncExternalStoreWithSelector钩子的部分，即订阅了useStore的部分。
+   *
+   * @param {Function} subscribe - 用于订阅外部存储更改的函数。当状态发生变化时，应触发其内部侦听器。
+   * @param {Function} getState - 用于获取外部存储的当前状态的函数。
+   * @param {Function} [getServerState] - 用于获取服务器端渲染的初始状态的可选函数。默认为 `getState`。
+   * @param {Function} [selector] - 用于选择状态片段的可选函数。
+   * @param {Function} [equalityFn] - 用于比较新状态和旧状态片段是否相等的可选函数。
+   *
+   * @returns {any} - 外部存储状态的选定片段。
+   */
   const slice = useSyncExternalStoreWithSelector(
     api.subscribe,
     api.getState,
@@ -77,6 +91,7 @@ export function useStore<TState, StateSlice>(
     equalityFn
   )
   useDebugValue(slice)
+
   return slice
 }
 
@@ -111,8 +126,11 @@ type Create = {
  * 1. 判断createState 是否函数
  * 2. 是 => 返回值作为初始state
  * 3. 不是 => createState直接作为初始State
- * 4. UseBoundStore, 调用useStore,把state绑定到Store
+ * 4. 调用CreateStore，传入State做为参数创建store
+ * 5. 调用UseStore,核心就是通过useSyncExternalStoreWithSelector这个React的hook，来实现的对zustand状态变更后的局部刷新渲染
+ *
  */
+
 const createImpl = <T>(createState: StateCreator<T, [], []>) => {
   if (
     import.meta.env?.MODE !== 'production' &&
